@@ -1,1 +1,83 @@
-new
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .online-count {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      border: 1px solid #ccc;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+    }
+
+    .status {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: red;
+      margin-right: 10px;
+    }
+
+    .connected .status {
+      background-color: green;
+    }
+
+    .connected div:nth-child(2) {
+      color: green;
+    }
+
+    .disconnected div:nth-child(2) {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div id="online-count" class="online-count disconnected">
+    <div class="status"></div>
+    <div>not connected</div>
+  </div>
+
+  <script>
+    const url = 'wss://rblxcase.com/socket.io/?EIO=4&transport=websocket';
+    const params = '42/general,["chatOnline", {online: {en: 166, tr: 1, de: 1, es: 0, beg: 0, whale: 0}}]';
+
+    const onlineCountElement = document.getElementById('online-count');
+    const statusElement = onlineCountElement.querySelector('.status');
+    const statusTextElement = onlineCountElement.querySelector('div:nth-child(2)');
+
+    function connectWebSocket() {
+      const socket = new WebSocket(url);
+
+      socket.onopen = function() {
+        onlineCountElement.classList.remove('disconnected');
+        onlineCountElement.classList.add('connected');
+        statusTextElement.textContent = 'connected';
+        console.log('WebSocket connected');
+        socket.send(params); // Send the initial parameters
+      };
+
+      socket.onmessage = function(event) {
+        console.log('Message from server ', event.data);
+        // Handle the message from the server if needed
+      };
+
+      socket.onclose = function() {
+        onlineCountElement.classList.remove('connected');
+        onlineCountElement.classList.add('disconnected');
+        statusTextElement.textContent = 'not connected';
+        console.log('WebSocket disconnected. Reconnecting...');
+        setTimeout(connectWebSocket, 3000); // Try to reconnect after 3 seconds
+      };
+
+      socket.onerror = function(error) {
+        console.error('WebSocket error: ', error);
+        // Handle WebSocket error if needed
+      };
+    }
+
+    connectWebSocket();
+  </script>
+</body>
+</html>
